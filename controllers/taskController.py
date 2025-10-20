@@ -3,6 +3,15 @@ from db.db import DBconnection
 class TaskController:
     def __init__(self):
         self.db = DBconnection()
+        self.numberOfTasks = self.getNumberOfTasks()
+
+    def getNumberOfTasks(self):
+        self.db.createCursor()
+        cursor = self.db.cursor
+        cursor.execute('SELECT COUNT(*) FROM tasks')
+        count = cursor.fetchone()[0]
+        cursor.close()
+        return count
 
     def getTaskById(self, taskId):
         self.db.createCursor()
@@ -36,4 +45,23 @@ class TaskController:
             (name, description, parentProject, parentTask)
         )
         self.db.connection.commit()
+        self.numberOfTasks += 1
+        cursor.close()
+    
+    def deleteTask(self, taskId):
+        self.db.createCursor()
+        cursor = self.db.cursor
+        cursor.execute('DELETE FROM tasks WHERE id = ?', (taskId,))
+        self.db.connection.commit()
+        self.numberOfTasks -= 1
+        cursor.close()
+    
+    def deleteTasksByProject(self, projectId):
+        self.db.createCursor()
+        cursor = self.db.cursor
+        cursor.execute('SELECT COUNT(*) FROM tasks WHERE parentProject = ?', (projectId,))
+        deleted_count = cursor.fetchone()[0]
+        cursor.execute('DELETE FROM tasks WHERE parentProject = ?', (projectId,))
+        self.db.connection.commit()
+        self.numberOfTasks -= deleted_count
         cursor.close()
