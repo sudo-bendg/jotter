@@ -7,7 +7,7 @@ class ProjectController:
     def getProjectById(self, projectId):
         self.connection.createCursor()
         cursor = self.connection.cursor
-        cursor.execute('SELECT * FROM projects WHERE id = ?', (projectId))
+        cursor.execute('SELECT * FROM projects WHERE id = ?', (projectId,))
         project = cursor.fetchone()
         cursor.close()
         return project

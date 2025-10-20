@@ -3,16 +3,17 @@ from db.db import DBconnection
 class TaskController:
     def __init__(self):
         self.db = DBconnection()
-        self.db.createCursor()
 
     def getTaskById(self, taskId):
+        self.db.createCursor()
         cursor = self.db.cursor
-        cursor.execute('SELECT * FROM tasks WHERE id = ?', (taskId))
+        cursor.execute('SELECT * FROM tasks WHERE id = ?', (taskId,))
         task = cursor.fetchone()
         cursor.close()
         return task
     
     def getTasks(self):
+        self.db.createCursor()
         cursor = self.db.cursor
         cursor.execute('SELECT * FROM tasks')
         tasks = cursor.fetchall()
@@ -20,13 +21,15 @@ class TaskController:
         return tasks
     
     def getTasksByProject(self, projectId):
+        self.db.createCursor()
         cursor = self.db.cursor
-        cursor.execute('SELECT * FROM tasks WHERE parentProject = ?', (projectId))
+        cursor.execute('SELECT * FROM tasks WHERE parentProject = ?', (projectId,))
         tasks = cursor.fetchall()
         cursor.close()
         return tasks
     
     def addTask(self, name, parentProject, description=None, parentTask=None):
+        self.db.createCursor()
         cursor = self.db.cursor
         cursor.execute(
             'INSERT INTO tasks (name, description, parentProject, parentTask) VALUES (?, ?, ?, ?)', 
