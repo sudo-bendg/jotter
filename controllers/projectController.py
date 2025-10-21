@@ -29,6 +29,14 @@ class ProjectController:
         cursor.close()
         return projects
     
+    def getProjectsConcise(self):
+        self.connection.createCursor()
+        cursor = self.connection.cursor
+        cursor.execute('SELECT id, name FROM projects')
+        projects = [[row[0], row[1]] for row in cursor.fetchall()]
+        cursor.close()
+        return projects
+    
     def addProject(self, name, description = None):
         self.connection.createCursor()
         cursor = self.connection.cursor
