@@ -6,6 +6,7 @@ class App:
     def __init__(self):
         self.projectController = ProjectController()
         self.taskController = TaskController()
+        self.done = False
 
     def displayActionsBar(self, actions):
         actionBar = ""
@@ -24,7 +25,6 @@ class App:
     def projectsMenu(self, detailed=False):
         self.displayActionsBar(actions = {
             "o <projectId>": "open project <projectId>",
-            "e <projectId>": "edit project <projectId>",
             "D <projectId>": "delete project <projectId>",
             "d": "toggle detailed view",
             "Q": "quit"
@@ -39,7 +39,8 @@ class App:
                 print(f"\tID: {project[0]}, Name: {project[1]}")
         userAction = utils.validateInput(input(">>"))
         self.handleAction(actions = {
-            "o": self.openProject
+            "o": self.openProject,
+            "D": self.deleteProject,
         }, action = userAction)
 
     def openProject(self, args):
@@ -47,8 +48,15 @@ class App:
         project = self.projectController.getProjectById(projectId)
         print(project)
             
-        ## menu options
+    def deleteProject(self, args):
+        projectId = args[0]
+        project = self.projectController.getProjectById(projectId)
+        print(f"Delete project: ID: {project[0]}, Name: {project[1]}?")
         
+        userAction = utils.validateInput(input(">>"), ['y', 'n'])
+        if userAction == 'y':
+            self.projectController.deleteProject(projectId)
 
 app = App()
-app.projectsMenu(True)
+while not app.done:
+    app.projectsMenu(True)
