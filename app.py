@@ -7,6 +7,7 @@ class App:
         self.projectController = ProjectController()
         self.taskController = TaskController()
         self.done = False
+        self.detailed = False
 
     def displayActionsBar(self, actions):
         actionBar = ""
@@ -19,17 +20,22 @@ class App:
         command = action[0]
         args = action[2:].split(" ")
         actions[command](args)
+    
+    def toggleDetailedView(self, args):
+        self.detailed = not self.detailed
 
     ## projects actions
 
-    def projectsMenu(self, detailed=False):
+    def projectsMenu(self):
+
         self.displayActionsBar(actions = {
             "o <projectId>": "open project <projectId>",
             "D <projectId>": "delete project <projectId>",
             "d": "toggle detailed view",
             "Q": "quit"
         })
-        if detailed:
+
+        if self.detailed:
             projects = self.projectController.getProjects()
             for project in projects:
                 print(f"\tID: {project[0]}, Name: {project[1]}\n\t\tDescription: {project[2]}")
@@ -38,9 +44,11 @@ class App:
             for project in projects:
                 print(f"\tID: {project[0]}, Name: {project[1]}")
         userAction = utils.validateInput(input(">>"))
+
         self.handleAction(actions = {
             "o": self.openProject,
             "D": self.deleteProject,
+            "d": self.toggleDetailedView
         }, action = userAction)
 
     def openProject(self, args):
@@ -59,4 +67,4 @@ class App:
 
 app = App()
 while not app.done:
-    app.projectsMenu(True)
+    app.projectsMenu()
