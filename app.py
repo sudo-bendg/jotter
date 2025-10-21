@@ -24,6 +24,9 @@ class App:
     def toggleDetailedView(self, args):
         self.detailed = not self.detailed
 
+    def quit(self, args):
+        self.done = True
+
     ## projects actions
 
     def projectsMenu(self):
@@ -48,7 +51,8 @@ class App:
         self.handleAction(actions = {
             "o": self.openProject,
             "D": self.deleteProject,
-            "d": self.toggleDetailedView
+            "d": self.toggleDetailedView,
+            "Q": self.quit
         }, action = userAction)
 
     def openProject(self, args):
