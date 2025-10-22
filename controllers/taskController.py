@@ -29,7 +29,7 @@ class TaskController:
         cursor.close()
         return tasks
     
-    def getTasksByProject(self, projectId):
+    def getTasksByProjectId(self, projectId):
         self.db.createCursor()
         cursor = self.db.cursor
         cursor.execute('SELECT * FROM tasks WHERE parentProject = ?', (projectId,))
@@ -56,7 +56,7 @@ class TaskController:
         self.numberOfTasks -= 1
         cursor.close()
     
-    def deleteTasksByProject(self, projectId):
+    def deleteTasksByProjectId(self, projectId):
         self.db.createCursor()
         cursor = self.db.cursor
         cursor.execute('SELECT COUNT(*) FROM tasks WHERE parentProject = ?', (projectId,))

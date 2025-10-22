@@ -30,6 +30,7 @@ def createTasksTable():
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT NOT NULL,
             description TEXT,
+            done BOOLEAN DEFAULT false,
             parentProject INTEGER NOT NULL,
             parentTask INTEGER,
             FOREIGN KEY(parentProject) REFERENCES projects(id),
@@ -48,3 +49,6 @@ def dropTasksTable():
 
 dropTableMigrations = [dropProjectsTable, dropTasksTable]
 createTableMigrations = [createProjectsTable, createTasksTable]
+
+for migration in createTableMigrations:
+    migration()
