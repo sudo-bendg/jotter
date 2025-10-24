@@ -65,15 +65,40 @@ class App:
                 print(f"\tID: {project[0]}, Name: {project[1]}")
         print("\n")
     
-    def displayTasks(self):
-        if self.detailed:
-            tasks = self.taskController.getTasksByProjectId(self.currentProject)
-            for task in tasks:
-                print(f"\tID: {task[0]}, Name: {task[1]},\n\t\tDone: {task[3] == 1}\n\t\tDescription: {task[2]}\t\tParent Task ID: {task[5]}")
+    def organizeTasksHierarchy(self, tasks):
+        taskMap = {task[0]: {"task": task, "children": []} for task in tasks}
+        
+        rootTasks = []
+        for task in tasks:
+            if task[5] is None:
+                rootTasks.append(taskMap[task[0]])
+            else:
+                if task[5] in taskMap:
+                    taskMap[task[5]]["children"].append(taskMap[task[0]])
+        
+        return rootTasks
+    
+    def printTaskHierarchy(self, taskNode, level=0, detailed=False):
+        task = taskNode["task"]
+        indent = "\t" + " " * level
+        
+        if detailed:
+            print(f"{indent}ID: {task[0]}, Name: {task[1]},")
+            print(f"{indent} Done: {task[3] == 1}")
+            print(f"{indent} Description: {task[2]}")
         else:
-            tasks = self.taskController.getTasksByProjectId(self.currentProject)
-            for task in tasks:
-                print(f"\tID: {task[0]}, Name: {task[1]}, Done: {task[3] == 1}")
+            print(f"{indent}ID: {task[0]}, Name: {task[1]}, Done: {task[3] == 1}")
+        
+        for child in taskNode["children"]:
+            self.printTaskHierarchy(child, level + 1, detailed)
+    
+    def displayTasks(self):
+        tasks = self.taskController.getTasksByProjectId(self.currentProject)
+        taskHierarchy = self.organizeTasksHierarchy(tasks)
+        
+        for taskNode in taskHierarchy:
+            self.printTaskHierarchy(taskNode, 0, self.detailed)
+        
         print("\n")
 
     ## projects actions
