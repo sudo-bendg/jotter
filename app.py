@@ -35,7 +35,7 @@ class App(Projects, Tasks):
                 sys.exit(1)
 
     def displayActionsBar(self, actions):
-        actionBar = "\n"
+        actionBar = "\n\n"
         for key in actions.keys():
             actionBar += f"\t{key} - {actions[key]}\n"
         actionBar += "\n\n"
@@ -76,18 +76,28 @@ class App(Projects, Tasks):
         }, action = userAction)
 
     def openProject(self, args, projectController):
-        """Override UI openProject so App can set currentProject on success."""
         if not args or len(args) == 0:
             raise InvalidInputError("No project id provided")
         projectId = args[0]
         project = projectController.getProjectById(projectId)
-        # store the opened project id so app switches into tasks view
         self.currentProject = project[0]
     
     ## Tasks actions
     def tasksMenu(self):
+        self.displayActionsBar(actions = {
+            "c": "create new task",
+            "e <taskId>": "edit task <taskId>",
+            "D <taskId>": "delete task <taskId>",
+            "d": "toggle detailed view",
+            "C": "close project",
+            "Q": "quit"
+        })
+
         self.displayTasks()
-        userAction = super().tasksMenu(self.displayActionsBar)
+
+        userAction = utils.validateInput(input(">>"))
+        if not userAction:
+            raise InvalidInputError("Invalid input")
 
         self.handleAction(actions = {
             "c": lambda args: self.createTask(self.taskController, self.currentProject),
@@ -103,15 +113,15 @@ class App(Projects, Tasks):
 
 print("""
 ==============================================================
-                                                            
-    ██                                                    
-    ▀▀               ██        ██                         
-  ████    ▄████▄   ███████   ███████    ▄████▄    ██▄████ 
-    ██   ██▀  ▀██    ██        ██      ██▄▄▄▄██   ██▀     
-    ██   ██    ██    ██        ██      ██▀▀▀▀▀▀   ██      
-    ██   ▀██▄▄██▀    ██▄▄▄     ██▄▄▄   ▀██▄▄▄▄█   ██      
-    ██     ▀▀▀▀       ▀▀▀▀      ▀▀▀▀     ▀▀▀▀▀    ▀▀      
- ████▀                                                    
+                                                             
+     ██                                                    
+     ▀▀               ██        ██                         
+   ████    ▄████▄   ███████   ███████    ▄████▄    ██▄████ 
+     ██   ██▀  ▀██    ██        ██      ██▄▄▄▄██   ██▀     
+     ██   ██    ██    ██        ██      ██▀▀▀▀▀▀   ██      
+     ██   ▀██▄▄██▀    ██▄▄▄     ██▄▄▄   ▀██▄▄▄▄█   ██      
+     ██     ▀▀▀▀       ▀▀▀▀      ▀▀▀▀     ▀▀▀▀▀    ▀▀      
+  ████▀                                                    
                                                             
       
       - Benjamin Godfrey
