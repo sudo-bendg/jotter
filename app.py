@@ -66,7 +66,7 @@ class App(Projects, Tasks):
 
     def projectsMenu(self):
         userAction = super().projectsMenu(self.projectController, self.displayActionsBar)
-        
+       
         self.handleAction(actions = {
             "c": lambda args: self.createProject(self.projectController),
             "o": lambda args: self.openProject(args, self.projectController),
@@ -74,6 +74,15 @@ class App(Projects, Tasks):
             "d": self.toggleDetailedView,
             "Q": self.quit
         }, action = userAction)
+
+    def openProject(self, args, projectController):
+        """Override UI openProject so App can set currentProject on success."""
+        if not args or len(args) == 0:
+            raise InvalidInputError("No project id provided")
+        projectId = args[0]
+        project = projectController.getProjectById(projectId)
+        # store the opened project id so app switches into tasks view
+        self.currentProject = project[0]
     
     ## Tasks actions
     def tasksMenu(self):
