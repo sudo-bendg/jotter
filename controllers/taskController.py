@@ -70,3 +70,26 @@ class TaskController:
         self.db.connection.commit()
         self.numberOfTasks -= deleted_count
         cursor.close()
+    
+    def updateTask(self, taskId, name=None, description=None, done=None, parentTask=None):
+        self.db.createCursor()
+        cursor = self.db.cursor
+        updates = []
+        params = []
+        if name is not None:
+            updates.append('name = ?')
+            params.append(name)
+        if description is not None:
+            updates.append('description = ?')
+            params.append(description)
+        if done is not None:
+            updates.append('done = ?')
+            params.append(done)
+        if parentTask is not None:
+            updates.append('parentTask = ?')
+            params.append(parentTask)
+        params.append(taskId)
+        update_clause = ', '.join(updates)
+        cursor.execute(f'UPDATE tasks SET {update_clause} WHERE id = ?', params)
+        self.db.connection.commit()
+        cursor.close()

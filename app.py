@@ -30,9 +30,9 @@ class App:
                 sys.exit(1)
 
     def displayActionsBar(self, actions):
-        actionBar = ""
+        actionBar = "\n"
         for key in actions.keys():
-            actionBar += f"{key} - {actions[key]}    "
+            actionBar += f"\t{key} - {actions[key]}\n"
         actionBar += "\n\n"
         print(actionBar)
     
@@ -69,11 +69,11 @@ class App:
         if self.detailed:
             tasks = self.taskController.getTasksByProjectId(self.currentProject)
             for task in tasks:
-                print(f"\tID: {task[0]}, Name: {task[1]},\n\t\tDone: {task[3] == 1}\n\t\tDescription: {task[2]}")
+                print(f"\tID: {task[0]}, Name: {task[1]},\n\t\tDone: {task[3] == 1}\n\t\tDescription: {task[2]}\t\tParent Task ID: {task[5]}")
         else:
             tasks = self.taskController.getTasksByProjectId(self.currentProject)
             for task in tasks:
-                print(f"\tID: {task[0]}, Name: {task[1]}, Done: {task[3]}")
+                print(f"\tID: {task[0]}, Name: {task[1]}, Done: {task[3] == 1}")
         print("\n")
 
     ## projects actions
@@ -128,7 +128,7 @@ class App:
         
         self.displayActionsBar(actions = {
             "c": "create new task",
-            "o <taskId>": "open task <taskId>",
+            "e <taskId>": "edit task <taskId>",
             "D <taskId>": "delete tassk <taskId>",
             "d": "toggle detailed view",
             "C": "close project",
@@ -141,7 +141,7 @@ class App:
 
         self.handleAction(actions = {
             "c": self.createTask,
-            "o": self.openTask,
+            "e": self.editTask,
             "D": self.deleteTask,
             "d": self.toggleDetailedView,
             "C": self.closeProject,
@@ -176,11 +176,56 @@ class App:
         if description == "":
             description = None
         self.taskController.addTask(name, self.currentProject, description, parentTask)
-
-    def openTask(self, args):
+    
+    def editTask(self, args):
         taskId = args[0]
         task = self.taskController.getTaskById(taskId)
-        print(f"Task ID: {task[0]}, Name: {task[1]}, Description: {task[2]}, Done: {task[3]}")
+        print(f"Editing Task ID: {task[0]}, Name: {task[1]}, Description: {task[2]}, Done: {task[3] == 1}, Parent Task ID: {task[5]}")
+        
+        self.displayActionsBar(actions = {
+            "n": "edit name",
+            "d": "edit description",
+            "D": "toggle done status",
+            "p": "set parent task",
+            "q": "quit editing"
+        })
+
+        userAction = utils.validateInput(input(">>"), ['n', 'd', 'D', 'p', 'q'])
+
+        match userAction:
+            case 'n':
+                newName = input("New name: ")
+                self.taskController.updateTask(taskId, name = newName)
+            case 'd':
+                newDescription = input("New description: ")
+                self.taskController.updateTask(taskId, description = newDescription)
+            case 'D':
+                newDoneStatus = 0 if task[3] == 1 else 1
+                self.taskController.updateTask(taskId, done = newDoneStatus)
+            case 'p':
+                newParentTask = None
+                while newParentTask is None:
+                    parentTaskCandidate = utils.validateInput(input("Enter new parent task ID (or leave blank to remove parent): "))
+                    if parentTaskCandidate == "":
+                        break
+                    try:
+                        parentTaskCandidate = int(parentTaskCandidate)
+                        parentTaskRecord = self.taskController.getTaskById(parentTaskCandidate)
+                        if parentTaskRecord[4] != self.currentProject:
+                            print("Parent task does not belong to the current project. Do you want to try again?")
+                            retry = utils.validateInput(input(">>"), ['y', 'n'])
+                            if retry == 'n':
+                                break
+                            continue
+                        newParentTask = parentTaskCandidate
+                    except (ValueError, ResourceNotFoundError):
+                        print("Invalid task ID. Do you want to try again?")
+                        retry = utils.validateInput(input(">>"), ['y', 'n'])
+                        if retry == 'n':
+                            break
+                self.taskController.updateTask(taskId, parentTask = newParentTask)
+            case 'q':
+                return
 
     def deleteTask(self, args):
         taskId = args[0]
