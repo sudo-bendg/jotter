@@ -53,6 +53,28 @@ class App:
 
     def quit(self, args):
         self.done = True
+    
+    def displayProjects(self):
+        if self.detailed:
+            projects = self.projectController.getProjects()
+            for project in projects:
+                print(f"\tID: {project[0]}, Name: {project[1]}\n\t\tDescription: {project[2]}")
+        else:
+            projects = self.projectController.getProjects()
+            for project in projects:
+                print(f"\tID: {project[0]}, Name: {project[1]}")
+        print("\n")
+    
+    def displayTasks(self):
+        if self.detailed:
+            tasks = self.taskController.getTasksByProjectId(self.currentProject)
+            for task in tasks:
+                print(f"\tID: {task[0]}, Name: {task[1]},\n\t\tDone: {task[3] == 1}\n\t\tDescription: {task[2]}")
+        else:
+            tasks = self.taskController.getTasksByProjectId(self.currentProject)
+            for task in tasks:
+                print(f"\tID: {task[0]}, Name: {task[1]}, Done: {task[3]}")
+        print("\n")
 
     ## projects actions
 
@@ -66,15 +88,7 @@ class App:
             "Q": "quit"
         })
 
-        if self.detailed:
-            projects = self.projectController.getProjects()
-            for project in projects:
-                print(f"\tID: {project[0]}, Name: {project[1]}\n\t\tDescription: {project[2]}")
-        else:
-            projects = self.projectController.getProjects()
-            for project in projects:
-                print(f"\tID: {project[0]}, Name: {project[1]}")
-        print("\n")
+        self.displayProjects()
 
         userAction = utils.validateInput(input(">>"))
         if not userAction:
@@ -121,14 +135,8 @@ class App:
             "Q": "quit"
         })
 
-        if self.detailed:
-            tasks = self.taskController.getTasksByProjectId(self.currentProject)
-            for task in tasks:
-                print(f"\tID: {task[0]}, Name: {task[1]},\n\t\tDone: {task[3] == 1}\n\t\tDescription: {task[2]}")
-        else:
-            tasks = self.taskController.getTasksByProjectId(self.currentProject)
-            for task in tasks:
-                print(f"\tID: {task[0]}, Name: {task[1]}, Done: {task[3]}")
+        self.displayTasks()
+
         userAction = utils.validateInput(input(">>"))
 
         self.handleAction(actions = {
