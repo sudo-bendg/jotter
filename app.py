@@ -3,15 +3,18 @@ runMigrations()
 from controllers.projectController import ProjectController
 from controllers.taskController import TaskController
 from exceptions import JotterError, ResourceNotFoundError, DatabaseError, InvalidInputError
+from ui.projects import Projects
+from ui.tasks import Tasks
 import utils
 import sys
 
-class App:
+class App(Projects, Tasks):
     def __init__(self):
+        Projects.__init__(self)
+        Tasks.__init__(self)
         self.projectController = ProjectController()
         self.taskController = TaskController()
         self.done = False
-        self.detailed = False
         self.currentProject = None
 
     def appLoop(self):
@@ -56,213 +59,36 @@ class App:
     def quit(self, args):
         self.done = True
     
-    def displayProjects(self):
-        if self.detailed:
-            projects = self.projectController.getProjects()
-            for project in projects:
-                print(f"\tID: {project[0]}, Name: {project[1]}\n\t\tDescription: {project[2]}")
-        else:
-            projects = self.projectController.getProjects()
-            for project in projects:
-                print(f"\tID: {project[0]}, Name: {project[1]}")
-        print("\n")
-    
-    def organizeTasksHierarchy(self, tasks):
-        taskMap = {task[0]: {"task": task, "children": []} for task in tasks}
-        
-        rootTasks = []
-        for task in tasks:
-            if task[5] is None:
-                rootTasks.append(taskMap[task[0]])
-            else:
-                if task[5] in taskMap:
-                    taskMap[task[5]]["children"].append(taskMap[task[0]])
-        
-        return rootTasks
-    
-    def printTaskHierarchy(self, taskNode, level=0, detailed=False):
-        task = taskNode["task"]
-        indent = "\t" + " " * level
-        
-        if detailed:
-            print(f"{indent}ID: {task[0]}, Name: {task[1]},")
-            print(f"{indent} Done: {task[3] == 1}")
-            print(f"{indent} Description: {task[2]}")
-        else:
-            print(f"{indent}ID: {task[0]}, Name: {task[1]}, Done: {task[3] == 1}")
-        
-        for child in taskNode["children"]:
-            self.printTaskHierarchy(child, level + 1, detailed)
-    
     def displayTasks(self):
-        tasks = self.taskController.getTasksByProjectId(self.currentProject)
-        taskHierarchy = self.organizeTasksHierarchy(tasks)
-        
-        for taskNode in taskHierarchy:
-            self.printTaskHierarchy(taskNode, 0, self.detailed)
-        
-        print("\n")
+        super().displayTasks(self.taskController, self.currentProject)
 
     ## projects actions
 
     def projectsMenu(self):
-
-        self.displayActionsBar(actions = {
-            "c": "create new project",
-            "o <projectId>": "open project <projectId>",
-            "D <projectId>": "delete project <projectId>",
-            "d": "toggle detailed view",
-            "Q": "quit"
-        })
-
-        self.displayProjects()
-
-        userAction = utils.validateInput(input(">>"))
-        if not userAction:
-            raise InvalidInputError("Invalid input")
-
+        userAction = super().projectsMenu(self.projectController, self.displayActionsBar)
+        
         self.handleAction(actions = {
-            "c": self.createProject,
-            "o": self.openProject,
-            "D": self.deleteProject,
+            "c": lambda args: self.createProject(self.projectController),
+            "o": lambda args: self.openProject(args, self.projectController),
+            "D": lambda args: self.deleteProject(args, self.projectController),
             "d": self.toggleDetailedView,
             "Q": self.quit
         }, action = userAction)
-
-    def createProject(self, args):
-        name = input("Project name: ")
-        description = input("Project description (optional): ")
-        if description == "":
-            description = None
-        self.projectController.addProject(name, description)
-
-    def openProject(self, args):
-        projectId = args[0]
-        project = self.projectController.getProjectById(projectId)
-        self.currentProject = project[0]
-            
-    def deleteProject(self, args):
-        projectId = args[0]
-        project = self.projectController.getProjectById(projectId)
-        print(f"Delete project: ID: {project[0]}, Name: {project[1]}?")
-        
-        userAction = utils.validateInput(input(">>"), ['y', 'n'])
-        if userAction == 'y':
-            self.projectController.deleteProject(projectId)
     
     ## Tasks actions
     def tasksMenu(self):
-        
-        self.displayActionsBar(actions = {
-            "c": "create new task",
-            "e <taskId>": "edit task <taskId>",
-            "D <taskId>": "delete task <taskId>",
-            "d": "toggle detailed view",
-            "C": "close project",
-            "Q": "quit"
-        })
-
         self.displayTasks()
-
-        userAction = utils.validateInput(input(">>"))
+        userAction = super().tasksMenu(self.displayActionsBar)
 
         self.handleAction(actions = {
-            "c": self.createTask,
-            "e": self.editTask,
-            "D": self.deleteTask,
+            "c": lambda args: self.createTask(self.taskController, self.currentProject),
+            "e": lambda args: self.editTask(args, self.taskController),
+            "D": lambda args: self.deleteTask(args, self.taskController),
             "d": self.toggleDetailedView,
             "C": self.closeProject,
             "Q": self.quit
         }, action = userAction)
 
-    def createTask(self, args):
-        name = input("Task name: ")
-        description = input("Task description (optional): ")
-        hasParent = utils.validateInput(input("Is this a sub-task? (y/n): "), ['y', 'n'])
-        parentTask = None
-        if hasParent == 'y':
-            while not parentTask:
-                parentTaskCandidate = utils.validateInput(input("Enter parent task ID: "))
-                try:
-                    parentTaskCandidate = int(parentTaskCandidate)
-                    parentTaskRecord = self.taskController.getTaskById(parentTaskCandidate)
-                    if parentTaskRecord[4] != self.currentProject:
-                        print("Parent task does not belong to the current project. Do you want to try again?")
-                        retry = utils.validateInput(input(">>"), ['y', 'n'])
-                        if retry == 'n':
-                            break
-                        continue
-                    parentTask = parentTaskCandidate
-                except (ValueError, ResourceNotFoundError):
-                    print("Invalid task ID. Do you want to try again?")
-                    retry = utils.validateInput(input(">>"), ['y', 'n'])
-                    if retry == 'n':
-                        break
-        
-
-        if description == "":
-            description = None
-        self.taskController.addTask(name, self.currentProject, description, parentTask)
-    
-    def editTask(self, args):
-        taskId = args[0]
-        task = self.taskController.getTaskById(taskId)
-        print(f"Editing Task ID: {task[0]}, Name: {task[1]}, Description: {task[2]}, Done: {task[3] == 1}, Parent Task ID: {task[5]}")
-        
-        self.displayActionsBar(actions = {
-            "n": "edit name",
-            "d": "edit description",
-            "D": "toggle done status",
-            "p": "set parent task",
-            "q": "quit editing"
-        })
-
-        userAction = utils.validateInput(input(">>"), ['n', 'd', 'D', 'p', 'q'])
-
-        match userAction:
-            case 'n':
-                newName = input("New name: ")
-                self.taskController.updateTask(taskId, name = newName)
-            case 'd':
-                newDescription = input("New description: ")
-                self.taskController.updateTask(taskId, description = newDescription)
-            case 'D':
-                newDoneStatus = 0 if task[3] == 1 else 1
-                self.taskController.updateTask(taskId, done = newDoneStatus)
-            case 'p':
-                newParentTask = None
-                while newParentTask is None:
-                    parentTaskCandidate = utils.validateInput(input("Enter new parent task ID (or leave blank to remove parent): "))
-                    if parentTaskCandidate == "":
-                        break
-                    try:
-                        parentTaskCandidate = int(parentTaskCandidate)
-                        parentTaskRecord = self.taskController.getTaskById(parentTaskCandidate)
-                        if parentTaskRecord[4] != self.currentProject:
-                            print("Parent task does not belong to the current project. Do you want to try again?")
-                            retry = utils.validateInput(input(">>"), ['y', 'n'])
-                            if retry == 'n':
-                                break
-                            continue
-                        newParentTask = parentTaskCandidate
-                    except (ValueError, ResourceNotFoundError):
-                        print("Invalid task ID. Do you want to try again?")
-                        retry = utils.validateInput(input(">>"), ['y', 'n'])
-                        if retry == 'n':
-                            break
-                self.taskController.updateTask(taskId, parentTask = newParentTask)
-            case 'q':
-                return
-
-    def deleteTask(self, args):
-        taskId = args[0]
-        task = self.taskController.getTaskById(taskId)
-        print(f"Delete task: ID: {task[0]}, Name: {task[1]}?")
-        
-        userAction = utils.validateInput(input(">>"), ['y', 'n'])
-        if userAction == 'y':
-            self.taskController.deleteTask(taskId)
-    
     def closeProject(self, args):
         self.currentProject = None
 
