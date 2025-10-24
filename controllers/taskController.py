@@ -1,4 +1,5 @@
 from db.db import DBconnection
+from exceptions import ResourceNotFoundError, DatabaseError
 
 class TaskController:
     def __init__(self):
@@ -14,12 +15,16 @@ class TaskController:
         return count
 
     def getTaskById(self, taskId):
-        self.db.createCursor()
-        cursor = self.db.cursor
-        cursor.execute('SELECT * FROM tasks WHERE id = ?', (taskId,))
-        task = cursor.fetchone()
-        cursor.close()
-        return task
+        try:
+            self.db.createCursor()
+            cursor = self.db.cursor
+            cursor.execute('SELECT * FROM tasks WHERE id = ?', (taskId,))
+            task = cursor.fetchone()
+            if not task:
+                raise ResourceNotFoundError(f"Task with ID {taskId} not found")
+            return task
+        finally:
+            self.db.closeCursor()
     
     def getTasks(self):
         self.db.createCursor()

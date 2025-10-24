@@ -1,4 +1,5 @@
 from db.db import DBconnection
+from exceptions import ResourceNotFoundError, DatabaseError
 
 class ProjectController:
     def  __init__(self):
@@ -14,12 +15,16 @@ class ProjectController:
         return count
 
     def getProjectById(self, projectId):
-        self.connection.createCursor()
-        cursor = self.connection.cursor
-        cursor.execute('SELECT * FROM projects WHERE id = ?', (projectId,))
-        project = cursor.fetchone()
-        cursor.close()
-        return project
+        try:
+            self.connection.createCursor()
+            cursor = self.connection.cursor
+            cursor.execute('SELECT * FROM projects WHERE id = ?', (projectId,))
+            project = cursor.fetchone()
+            if not project:
+                raise ResourceNotFoundError(f"Project with ID {projectId} not found")
+            return project
+        finally:
+            self.connection.closeCursor()
     
     def getProjects(self):
         self.connection.createCursor()

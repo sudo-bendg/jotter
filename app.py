@@ -1,6 +1,8 @@
 from controllers.projectController import ProjectController
 from controllers.taskController import TaskController
+from exceptions import JotterError, ResourceNotFoundError, DatabaseError, InvalidInputError
 import utils
+import sys
 
 class App:
     def __init__(self):
@@ -12,10 +14,20 @@ class App:
 
     def appLoop(self):
         while not self.done:
-            if self.currentProject:
-                self.tasksMenu()
-            else:
-                self.projectsMenu()
+            try:
+                if self.currentProject:
+                    self.tasksMenu()
+                else:
+                    self.projectsMenu()
+            except ResourceNotFoundError as e:
+                print(f"\nError: {str(e)}")
+            except DatabaseError as e:
+                print(f"\nDatabase Error: {str(e)}")
+            except InvalidInputError as e:
+                print(f"\nInvalid Input: {str(e)}")
+            except Exception as e:
+                print(f"\nUnexpected error: {str(e)}")
+                sys.exit(1)
 
     def displayActionsBar(self, actions):
         actionBar = ""
@@ -25,9 +37,16 @@ class App:
         print(actionBar)
     
     def handleAction(self, actions, action):
+        if not action:
+            raise InvalidInputError("No action provided")
         command = action[0]
-        args = action[2:].split(" ")
-        actions[command](args)
+        if command not in actions:
+            raise InvalidInputError(f"Invalid command: {command}")
+        args = action[2:].split(" ") if len(action) > 2 else []
+        try:
+            actions[command](args)
+        except IndexError:
+            raise InvalidInputError("Missing required arguments for command")
     
     def toggleDetailedView(self, args):
         self.detailed = not self.detailed
@@ -55,7 +74,11 @@ class App:
             projects = self.projectController.getProjects()
             for project in projects:
                 print(f"\tID: {project[0]}, Name: {project[1]}")
+        print("\n")
+
         userAction = utils.validateInput(input(">>"))
+        if not userAction:
+            raise InvalidInputError("Invalid input")
 
         self.handleAction(actions = {
             "c": self.createProject,
