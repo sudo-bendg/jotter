@@ -42,6 +42,14 @@ class TaskController:
         cursor.close()
         return tasks
     
+    def getTasksByParentTaskId(self, parentTaskId):
+        self.db.createCursor()
+        cursor = self.db.cursor
+        cursor.execute('SELECT * FROM tasks WHERE parentTask = ?', (parentTaskId,))
+        tasks = cursor.fetchall()
+        cursor.close()
+        return tasks
+    
     def addTask(self, name, parentProject, description=None, parentTask=None):
         self.db.createCursor()
         cursor = self.db.cursor
@@ -56,6 +64,9 @@ class TaskController:
     def deleteTask(self, taskId):
         self.db.createCursor()
         cursor = self.db.cursor
+        childTasks = self.getTasksByParentTaskId(taskId)
+        for child in childTasks:
+            self.deleteTask(child[0])
         cursor.execute('DELETE FROM tasks WHERE id = ?', (taskId,))
         self.db.connection.commit()
         self.numberOfTasks -= 1

@@ -154,7 +154,7 @@ class App:
         self.displayActionsBar(actions = {
             "c": "create new task",
             "e <taskId>": "edit task <taskId>",
-            "D <taskId>": "delete tassk <taskId>",
+            "D <taskId>": "delete task <taskId>",
             "d": "toggle detailed view",
             "C": "close project",
             "Q": "quit"
