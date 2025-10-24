@@ -1,4 +1,4 @@
-from db import DBconnection
+from db.db import DBconnection
 
 connection = DBconnection()
 
@@ -50,5 +50,6 @@ def dropTasksTable():
 dropTableMigrations = [dropProjectsTable, dropTasksTable]
 createTableMigrations = [createProjectsTable, createTasksTable]
 
-for migration in createTableMigrations:
-    migration()
+def runMigrations():
+    for migration in createTableMigrations:
+        migration()

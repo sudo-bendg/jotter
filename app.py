@@ -1,3 +1,5 @@
+from db.migration import runMigrations
+runMigrations()
 from controllers.projectController import ProjectController
 from controllers.taskController import TaskController
 from exceptions import JotterError, ResourceNotFoundError, DatabaseError, InvalidInputError
@@ -263,6 +265,23 @@ class App:
     
     def closeProject(self, args):
         self.currentProject = None
+
+print("""
+==============================================================
+                                                            
+    ██                                                    
+    ▀▀               ██        ██                         
+  ████    ▄████▄   ███████   ███████    ▄████▄    ██▄████ 
+    ██   ██▀  ▀██    ██        ██      ██▄▄▄▄██   ██▀     
+    ██   ██    ██    ██        ██      ██▀▀▀▀▀▀   ██      
+    ██   ▀██▄▄██▀    ██▄▄▄     ██▄▄▄   ▀██▄▄▄▄█   ██      
+    ██     ▀▀▀▀       ▀▀▀▀      ▀▀▀▀     ▀▀▀▀▀    ▀▀      
+ ████▀                                                    
+                                                            
+      
+      - Benjamin Godfrey
+      
+==============================================================""")
 
 app = App()
 app.appLoop()
