@@ -151,9 +151,31 @@ class App:
     def createTask(self, args):
         name = input("Task name: ")
         description = input("Task description (optional): ")
+        hasParent = utils.validateInput(input("Is this a sub-task? (y/n): "), ['y', 'n'])
+        parentTask = None
+        if hasParent == 'y':
+            while not parentTask:
+                parentTaskCandidate = utils.validateInput(input("Enter parent task ID: "))
+                try:
+                    parentTaskCandidate = int(parentTaskCandidate)
+                    parentTaskRecord = self.taskController.getTaskById(parentTaskCandidate)
+                    if parentTaskRecord[4] != self.currentProject:
+                        print("Parent task does not belong to the current project. Do you want to try again?")
+                        retry = utils.validateInput(input(">>"), ['y', 'n'])
+                        if retry == 'n':
+                            break
+                        continue
+                    parentTask = parentTaskCandidate
+                except (ValueError, ResourceNotFoundError):
+                    print("Invalid task ID. Do you want to try again?")
+                    retry = utils.validateInput(input(">>"), ['y', 'n'])
+                    if retry == 'n':
+                        break
+        
+
         if description == "":
             description = None
-        self.taskController.addTask(name, self.currentProject, description)
+        self.taskController.addTask(name, self.currentProject, description, parentTask)
 
     def openTask(self, args):
         taskId = args[0]
