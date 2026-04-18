@@ -1,10 +1,12 @@
 import sqlite3
 from exceptions import DatabaseError
+import os
 
 class DBconnection:
-    def __init__(self, db_name='jotter.db'):
+    def __init__(self, db_name='.jotter.db'):
         try:
-            self.connection = sqlite3.connect(db_name)
+            path = os.path.join(os.path.expanduser('~'), db_name)
+            self.connection = sqlite3.connect(path)
             self.cursor = None
         except sqlite3.Error as e:
             raise DatabaseError(f"Failed to connect to database: {str(e)}")
